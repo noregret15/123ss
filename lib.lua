@@ -35,57 +35,72 @@ end
 function Library:Notify(text,duration)
     duration=duration or 3
     if not self.NotificationGui then
-        local gui=Create("ScreenGui",{Parent=CoreGui,ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
+        local gui=Create("ScreenGui",{Parent=CoreGui,ResetOnSpawn=false})
         local holder=Create("Frame",{Parent=gui,AnchorPoint=Vector2.new(1,1),Position=UDim2.fromScale(1,1),Size=UDim2.fromOffset(320,500),BackgroundTransparency=1})
-        Create("UIListLayout",{Parent=holder,Padding=UDim.new(0,8),VerticalAlignment=Enum.VerticalAlignment.Bottom,HorizontalAlignment=Enum.HorizontalAlignment.Right})
+        Create("UIListLayout",{Parent=holder,Padding=UDim.new(0,8),VerticalAlignment=Enum.VerticalAlignment.Bottom})
         self.NotificationGui=holder
     end
-    local note=Create("Frame",{Parent=self.NotificationGui,Size=UDim2.fromOffset(320,56),BackgroundColor3=self.Theme.Dark,BorderSizePixel=0})
-    local textLabel=Create("TextLabel",{Parent=note,Position=UDim2.fromOffset(10,0),Size=UDim2.new(1,-20,1,0),BackgroundTransparency=1,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=14,TextColor3=self.Theme.Text,Text=text})
-    note.BackgroundTransparency=1
-    note.Position=UDim2.fromOffset(40,0)
-    Tween(note,0.25,{BackgroundTransparency=0,Position=UDim2.fromOffset(0,0)})
+    local n=Create("Frame",{Parent=self.NotificationGui,Size=UDim2.fromOffset(320,56),BackgroundColor3=self.Theme.Dark,BorderSizePixel=0})
+    local t=Create("TextLabel",{Parent=n,Size=UDim2.new(1,-20,1,0),Position=UDim2.fromOffset(10,0),BackgroundTransparency=1,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=14,TextColor3=self.Theme.Text,Text=text})
+    n.BackgroundTransparency=1
+    n.Position=UDim2.fromOffset(40,0)
+    Tween(n,0.25,{BackgroundTransparency=0,Position=UDim2.new(0,0,0,0)})
     task.delay(duration,function()
-        Tween(note,0.25,{BackgroundTransparency=1,Position=UDim2.fromOffset(40,0)})
+        Tween(n,0.25,{BackgroundTransparency=1,Position=UDim2.fromOffset(40,0)})
         task.wait(0.25)
-        note:Destroy()
+        n:Destroy()
     end)
 end
 
 function Library:CreateWindow(title,fade)
     fade=fade or 0.25
     local Gui=Create("ScreenGui",{Parent=CoreGui,ResetOnSpawn=false})
-    local Main=Create("Frame",{Parent=Gui,AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),Size=UDim2.fromScale(0,0),BackgroundColor3=self.Theme.Background,BorderSizePixel=0})
+    local Main=Create("Frame",{Parent=Gui,Size=UDim2.fromOffset(700,520),AnchorPoint=Vector2.new(0.5,0.5),Position=UDim2.fromScale(0.5,0.5),BackgroundColor3=self.Theme.Background,BorderSizePixel=0})
+    Main.Size=UDim2.fromScale(0,0)
     Tween(Main,fade,{Size=UDim2.fromOffset(700,520)})
 
-    Create("TextLabel",{Parent=Main,Size=UDim2.new(1,0,0,40),BackgroundTransparency=1,Text=title,Font=Enum.Font.GothamBold,TextSize=20,TextColor3=self.Theme.Text})
+    local Top=Create("Frame",{Parent=Main,Size=UDim2.new(1,0,0,40),BackgroundColor3=self.Theme.Dark,BorderSizePixel=0})
+    Create("TextLabel",{Parent=Top,Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=title,Font=Enum.Font.GothamBold,TextSize=18,TextColor3=self.Theme.Text})
 
-    local TabsBar=Create("Frame",{Parent=Main,Position=UDim2.fromOffset(0,40),Size=UDim2.new(1,0,0,36),BackgroundColor3=self.Theme.Light,BorderSizePixel=0})
-    Create("UIListLayout",{Parent=TabsBar,FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,4)})
+    local dragging=false
+    local dragStart, startPos
 
-    local Pages=Create("Frame",{Parent=Main,Position=UDim2.fromOffset(10,86),Size=UDim2.new(1,-20,1,-96),BackgroundTransparency=1})
-
-    local Hidden=false
-    UserInputService.InputBegan:Connect(function(i,g)
-        if g then return end
-        if i.KeyCode==Enum.KeyCode.LeftAlt then
-            Hidden=not Hidden
-            Tween(Main,0.25,{Size=Hidden and UDim2.fromScale(0,0) or UDim2.fromOffset(700,520)})
+    Top.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=true
+            dragStart=i.Position
+            startPos=Main.Position
         end
     end)
+
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if dragging then
+            local delta=UserInputService:GetMouseLocation()-dragStart
+            Main.Position=startPos+UDim2.fromOffset(delta.X,delta.Y)
+        end
+    end)
+
+    local TabsBar=Create("Frame",{Parent=Main,Position=UDim2.fromOffset(0,40),Size=UDim2.new(1,0,0,34),BackgroundColor3=self.Theme.Light,BorderSizePixel=0})
+    Create("UIListLayout",{Parent=TabsBar,FillDirection=Enum.FillDirection.Horizontal,Padding=UDim.new(0,4)})
+
+    local Pages=Create("Frame",{Parent=Main,Position=UDim2.fromOffset(10,84),Size=UDim2.new(1,-20,1,-94),BackgroundTransparency=1})
 
     local Window={}
     local CurrentTab=nil
 
     function Window:AddTab(name)
         local Tab={}
-        local Btn=Create("TextButton",{Parent=TabsBar,Size=UDim2.fromOffset(130,30),Text=name,Font=Enum.Font.Gotham,TextSize=14,TextColor3=Library.Theme.SubText,BackgroundColor3=Library.Theme.Dark,BorderSizePixel=0})
+        local Btn=Create("TextButton",{Parent=TabsBar,Size=UDim2.fromOffset(120,28),Text=name,Font=Enum.Font.Gotham,TextSize=13,TextColor3=Library.Theme.SubText,BackgroundColor3=Library.Theme.Dark,BorderSizePixel=0})
         local Page=Create("Frame",{Parent=Pages,Size=UDim2.fromScale(1,1),Visible=false,BackgroundTransparency=1})
 
         local Left=Create("Frame",{Parent=Page,Size=UDim2.fromScale(0.48,1),BackgroundTransparency=1})
         local Right=Create("Frame",{Parent=Page,Position=UDim2.fromScale(0.52,0),Size=UDim2.fromScale(0.48,1),BackgroundTransparency=1})
-        Create("UIListLayout",{Parent=Left,Padding=UDim.new(0,8),VerticalAlignment=Enum.VerticalAlignment.Top})
-        Create("UIListLayout",{Parent=Right,Padding=UDim.new(0,8),VerticalAlignment=Enum.VerticalAlignment.Top})
+        Create("UIListLayout",{Parent=Left,Padding=UDim.new(0,8)})
+        Create("UIListLayout",{Parent=Right,Padding=UDim.new(0,8)})
 
         local function Activate()
             if CurrentTab then
@@ -100,64 +115,19 @@ function Library:CreateWindow(title,fade)
         Btn.MouseButton1Click:Connect(Activate)
         if not CurrentTab then Activate() end
 
-        local function AddGroup(parent,gname)
+        local function AddGroup(parent,name)
             local Group={}
-            local Frame=Create("Frame",{Parent=parent,Size=UDim2.new(1,0,0,36),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Library.Theme.Light,BorderSizePixel=0})
-            local Header=Create("TextButton",{Parent=Frame,Size=UDim2.new(1,0,0,30),BackgroundTransparency=1,Text=gname,Font=Enum.Font.GothamBold,TextSize=13,TextColor3=Library.Theme.Text})
-            local Holder=Create("Frame",{Parent=Frame,Position=UDim2.fromOffset(6,32),Size=UDim2.new(1,-12,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1})
-            Create("UIListLayout",{Parent=Holder,Padding=UDim.new(0,6),VerticalAlignment=Enum.VerticalAlignment.Top})
+            local Frame=Create("Frame",{Parent=parent,Size=UDim2.new(1,0,0,32),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Library.Theme.Light,BorderSizePixel=0})
+            Create("TextLabel",{Parent=Frame,Size=UDim2.new(1,0,0,26),BackgroundTransparency=1,Text=name,Font=Enum.Font.GothamBold,TextSize=13,TextColor3=Library.Theme.Text})
+            local Holder=Create("Frame",{Parent=Frame,Position=UDim2.fromOffset(6,28),Size=UDim2.new(1,-12,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1})
+            Create("UIListLayout",{Parent=Holder,Padding=UDim.new(0,6)})
 
-            function Group:AddButton(text,callback)
-                local B=Create("TextButton",{Parent=Holder,Size=UDim2.new(1,0,0,26),Text=text,Font=Enum.Font.Gotham,TextSize=13,TextColor3=Library.Theme.Text,BackgroundColor3=Library.Theme.Dark,BorderSizePixel=0})
-                B.MouseButton1Click:Connect(function()
-                    Tween(B,0.1,{BackgroundColor3=Library.Theme.Accent})
-                    task.delay(0.1,function()
-                        Tween(B,0.1,{BackgroundColor3=Library.Theme.Dark})
-                    end)
-                    callback()
-                end)
-            end
-
-            function Group:AddToggle(flag,default,callback)
-                Library.Flags[flag]=default
-                local T=Create("TextButton",{Parent=Holder,Size=UDim2.new(1,0,0,26),Font=Enum.Font.Gotham,TextSize=13,BorderSizePixel=0})
-                local function Refresh()
-                    T.Text=flag.." ["..(Library.Flags[flag] and "ON" or "OFF").."]"
-                    T.TextColor3=Library.Theme.Text
-                    T.BackgroundColor3=Library.Flags[flag] and Library.Theme.Positive or Library.Theme.Dark
-                end
-                Refresh()
-                T.MouseButton1Click:Connect(function()
-                    Library.Flags[flag]=not Library.Flags[flag]
-                    Refresh()
-                    callback(Library.Flags[flag])
-                end)
-                return {SetValue=function(_,v)Library.Flags[flag]=v Refresh()end}
-            end
-
-            function Group:AddSlider(flag,min,max,default,step,callback)
-                step=step or 1
-                Library.Flags[flag]=default
-                local F=Create("Frame",{Parent=Holder,Size=UDim2.new(1,0,0,36),BackgroundColor3=Library.Theme.Dark,BorderSizePixel=0})
-                local L=Create("TextLabel",{Parent=F,Size=UDim2.new(1,-10,0,16),Position=UDim2.fromOffset(5,2),BackgroundTransparency=1,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Center,Font=Enum.Font.Gotham,TextSize=13,TextColor3=Library.Theme.Text})
-                local B=Create("Frame",{Parent=F,Position=UDim2.fromOffset(5,22),Size=UDim2.new(1,-10,0,8),BackgroundColor3=Library.Theme.Light,BorderSizePixel=0})
-                local Fill=Create("Frame",{Parent=B,Size=UDim2.fromScale(0,1),BackgroundColor3=Library.Theme.Accent,BorderSizePixel=0})
-                local Drag=false
-                local function Set(v)
-                    v=math.clamp(math.floor(v/step+0.5)*step,min,max)
-                    Library.Flags[flag]=v
-                    L.Text=flag..": "..v
-                    Tween(Fill,0.08,{Size=UDim2.fromScale((v-min)/(max-min),1)})
-                    callback(v)
-                end
-                Set(default)
-                B.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 then Drag=true end end)
-                UserInputService.InputEnded:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 then Drag=false end end)
-                RunService.RenderStepped:Connect(function()
-                    if Drag then
-                        local pos=(Mouse.X-B.AbsolutePosition.X)/B.AbsoluteSize.X
-                        Set(min+(max-min)*pos)
-                    end
+            function Group:AddTextbox(flag,default,callback)
+                Library.Flags[flag]=default or ""
+                local B=Create("TextBox",{Parent=Holder,Size=UDim2.new(1,0,0,26),Text=Library.Flags[flag],Font=Enum.Font.Gotham,TextSize=13,TextColor3=Library.Theme.Text,BackgroundColor3=Library.Theme.Dark,ClearTextOnFocus=false,BorderSizePixel=0})
+                B.FocusLost:Connect(function()
+                    Library.Flags[flag]=B.Text
+                    callback(B.Text)
                 end)
             end
 
@@ -166,7 +136,6 @@ function Library:CreateWindow(title,fade)
 
         function Tab:AddLeftGroup(n)return AddGroup(Left,n)end
         function Tab:AddRightGroup(n)return AddGroup(Right,n)end
-
         return Tab
     end
 
