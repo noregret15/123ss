@@ -1,7 +1,5 @@
 local CoreGui = game:GetService("CoreGui")
 
-getfenv().Library = nil
-
 local Functions = {}
 local Objects = {}
 
@@ -66,6 +64,3 @@ Functions["AddWindow"] = function(Name)
         TextYAlignment = Enum.TextYAlignment.Center
     })
 end
-
-getfenv().Library = Library__
-return Library__
