@@ -5,7 +5,7 @@ getfenv().Library = nil
 local Functions = {}
 local Objects = {}
 
-local Library = {
+local Library__ = {
     Background = Color3.fromRGB(20, 20, 20),
     Accent = Color3.fromRGB(0, 200, 200),
     Text = Color3.fromRGB(255, 255, 255),
@@ -33,7 +33,7 @@ Functions["AddWindow"] = function(Name)
     local Frame = Functions.Create("Frame", {
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Library.Background,
+        BackgroundColor3 = Library__.Background,
         Size = UDim2.new(0, 700, 0, 900),
         BackgroundTransparency = 0,
         Parent = SCREEN,
@@ -46,7 +46,7 @@ Functions["AddWindow"] = function(Name)
         Size = UDim2.new(1, 0, 0, 50),
         Position = UDim2.new(0, 0, 0, 0),
         AnchorPoint = Vector2.new(0, 0),
-        BackgroundColor3 = Library.Background,
+        BackgroundColor3 = Library__.Background,
         BackgroundTransparency = 0.2
     })
 
@@ -54,9 +54,9 @@ Functions["AddWindow"] = function(Name)
         Name = "TEXT",
         Text = Name,
         TextSize = 16,
-        Font = Library.Font,
+        Font = Library__.Font,
         Parent = FrameLabel,
-        TextColor3 = Library.Text,
+        TextColor3 = Library__.Text,
         BackgroundTransparency = 1,
         TextStrokeColor3 = Color3.fromRGB(0, 0, 0),
         Size = UDim2.new(1, 0, 1, 0),
@@ -67,5 +67,5 @@ Functions["AddWindow"] = function(Name)
     })
 end
 
-getfenv().Library = Library
-return Library
+getfenv().Library = Library__
+return Library__
